@@ -4,6 +4,11 @@ import sys
 import os
 from subprocess import call
 
+# TODO
+# Parse Upload Path
+
+
+uploadDir = "~/Projects/CAD/Eagle/toUpload/"
 
 # Recursively generate images in given directory
 def genImages(path):
@@ -23,10 +28,12 @@ def genImages(path):
             if (brd_mtime > png_mtime):
               print " Regenerating board.png for", name
               call(["rm", os.path.join(path, "board.png")])
-              call(["eagle", "-C", "ratsnest; export image '" + os.path.join(path, "board.png") + "' 600; quit;", path_plus_name])
+              call(["eagle", "-C", "ratsnest; export image '" + os.path.join(path, "board.png") + "' 300; quit;", path_plus_name])
           else:
             print " Generating board.png for", name
-            call(["eagle", "-C", "ratsnest; export image '" + os.path.join(path, "board.png") + "' 600; quit;", path_plus_name])
+            call(["eagle", "-C", "ratsnest; export image '" + os.path.join(path, "board.png") + "' 300; quit;", path_plus_name])
+
+          call(["rm *.b\#*"], shell=True)
 
 
         elif ".sch" in name:
@@ -38,21 +45,27 @@ def genImages(path):
             if (sch_mtime > png_mtime):
               print " Regenerating board.png for", name
               call(["rm", os.path.join(path, "schematic.png")])
-              call(["eagle", "-C", "export image '" + os.path.join(path, "schematic.png") + "' 600; quit;", path_plus_name])
+              call(["eagle", "-C", "export image '" + os.path.join(path, "schematic.png") + "' 300; quit;", path_plus_name])
           else:
             print " Generating schematic.png for", name
-            call(["eagle", "-C", "export image '" + os.path.join(path, "schematic.png") + "' 600; quit;", path_plus_name])
+            call(["eagle", "-C", "export image '" + os.path.join(path, "schematic.png") + "' 300; quit;", path_plus_name])
+
+          call(["rm *.s\#*"], shell=True)
 
 
         elif ".dri" in name:
           # Collect Gerber files into .zip
-          if os.path.exists(os.path.splitext(name)[0] + ".dri"):
-            print " Generating Archive for", os.path.splitext(name)[0][0:-7]
-            os.chdir(path)
-            call(["rm *.zip"], shell=True)
-            call(["zip '" + os.path.splitext(name)[0][0:-7] + ".zip' *.ger *.dri *.xln"], shell=True)
-            call(["rm *.ger *.gpi *.dri *.xln *\#*"], shell=True)
-
+          if os.path.exists(os.path.join(path, name[:-4] + ".dri")):
+            if os.path.exists(os.path.join(uploadDir, name[:-11] + ".zip")):
+              print " Warning. Duplicate project found for", name[:-11]
+            else:
+              print " Generating Archive for", name[:-11]
+              os.chdir(path)
+              call(["rm *.zip"], shell=True)
+              call(["zip '" + name[:-11] + ".zip' *.ger *.dri *.xln"], shell=True)
+              call(["rm *.b\#* *.s\#*"], shell=True)
+              call(["rm *.ger *.gpi *.dri *.xln"], shell=True)
+              call(["mv *.zip "+ uploadDir], shell=True)
 
 
 # CMD Args are directories
